@@ -1,0 +1,173 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+  namespace: default
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  serviceName: "keycloak-service"
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      serviceAccountName: keycloak-sa
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:latest
+          args: ["start","--cache-stack=kubernetes", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 8443
+              name: https
+            - name: jgroups
+              containerPort: 7600
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: keycloak-tls-volume
+              mountPath: /etc/x509/https
+              readOnly: true
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_BOOTSTRAP_ADMIN_USERNAME
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_BOOTSTRAP_ADMIN_PASSWORD
+            - name: KC_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_DB
+            - name: KC_DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_DB_URL
+            - name: KC_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HOSTNAME
+            - name: KC_HEALTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HEALTH_ENABLED
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_DB_USERNAME
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_DB_PASSWORD
+            - name: KC_HTTPS_CERTIFICATE_FILE
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_HTTPS_CERTIFICATE_FILE
+            - name: KC_HTTPS_CERTIFICATE_KEY_FILE
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-secrets
+                  key: KC_HTTPS_CERTIFICATE_KEY_FILE
+            - name: KC_PROXY
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_PROXY
+            - name: jgroups.dns.query
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: JGROUPS_DNS_QUERY
+            - name: PROXY_ADDRESS_FORWARDING
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: PROXY_ADDRESS_FORWARDING
+            - name: KC_METRICS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_METRICS_ENABLED
+            - name: KC_HTTP_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HTTP_ENABLED
+            - name: KC_HTTP_RELATIVE_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HTTP_RELATIVE_PATH
+            - name: KC_HOSTNAME_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HOSTNAME_URL
+            - name: KC_HOSTNAME_ADMIN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_HOSTNAME_URL
+            - name: JAVA_OPTS_APPEND
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: JAVA_OPTS_APPEND
+            - name: KC_LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: keycloak-configmap
+                  key: KC_LOG_LEVEL
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: 9000
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /auth/health/live
+              port: 9000
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: keycloak-tls-volume
+          secret:
+            secretName: keycloak-tls
+      tolerations:
+        - key: "keycloak"
+          operator: "Exists"
+          effect: "NoSchedule"
+

@@ -1,0 +1,3 @@
+/certs/
+.idea
+/k8s/base/keycloak-secrets.yaml
