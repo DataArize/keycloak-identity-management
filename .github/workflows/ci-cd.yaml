@@ -23,6 +23,17 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 363.0.0'
+
+      - name: Use gcloud CLI
+        run: gcloud info
+
+      - name: Instant Gcloud Auth
+        run: gcloud components install gke-gcloud-auth-plugin
+
       - name: Set context for GKE
         run: |
             gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME }} --region ${{ secrets.GKE_CLUSTER_REGION }} --project ${{ secrets.GCP_PROJECT_ID }}
