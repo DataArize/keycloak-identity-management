@@ -5,7 +5,7 @@ resources:
   - keycloak-statefulset.yaml
   - keycloak-service.yaml
   - keycloak-configmap.yaml
-  - keycloak-secrets.yaml
+#  - keycloak-secrets.yaml
   - keycloak-service-account.yaml
   - ingress.yaml
 
