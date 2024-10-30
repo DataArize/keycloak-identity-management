@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: keycloak
+spec:
+  replicas: 3 # For dev, you may want only 1 replica
+  template:
+    spec:
+      containers:
+        - name: keycloak
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          env:
+            - name: KC_LOG_LEVEL
+              value: INFO  # Enable debug level logging for development
