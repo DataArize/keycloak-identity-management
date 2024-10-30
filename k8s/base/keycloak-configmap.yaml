@@ -4,7 +4,7 @@ metadata:
   name: keycloak-configmap
 data:
   KC_DB: postgres
-  KC_DB_URL: jdbc:postgresql://35.200.252.192/keycloak-db
+  KC_DB_URL: jdbc:postgresql://YOUR_DATABASE_IP/keycloak-db
   KC_HOSTNAME: houseofllm.com
   KC_HEALTH_ENABLED: "true"
   KC_PROXY: edge
